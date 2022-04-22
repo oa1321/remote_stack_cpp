@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "dyalloc.hpp"
 #define MAX_DATA 2048
 
 int split_command(char org_str[MAX_DATA], size_t from, char new_str[MAX_DATA]){
@@ -49,7 +50,7 @@ struct of a stack
 a push function - push a string (max len is 1024) - return -1 if empty
 a pop function - pop a string (max len is 1024) - return -1 if empty
 a top function - return the top string (max len is 1024) - return -1 if empty
-a free_stack function - free the stack nodes and set the stack to be empty
+a dynmic_free_stack function - dynmic_free the stack nodes and set the stack to be empty
 */
 
 struct node {
@@ -69,14 +70,14 @@ int push(struct stack *s, char *data) {
     //push a string to the stack top
     //return -1 if empty
     //return 0 if success
-    struct node *new_node = (struct node *)malloc(sizeof(struct node));
+    struct node *new_node = (struct node *)dynmic_alloc(sizeof(struct node));
     if (new_node == NULL) {
-        printf("ERROR: malloc failed - PUSH OPERTION\n");
+        printf("ERROR: dynmic_alloc failed - PUSH OPERTION\n");
         return -1;
     }
-    new_node->data = (char *)malloc(sizeof(char) * strlen(data));
+    new_node->data = (char *)dynmic_alloc(sizeof(char) * strlen(data));
     if (new_node->data == NULL) {
-        printf("ERROR: malloc failed - PUSH OPERTION\n");
+        printf("ERROR: dynmic_alloc failed - PUSH OPERTION\n");
         return -1;
     }
     strcpy(new_node->data, data);
@@ -97,7 +98,7 @@ int pop(struct stack *s, char *data) {
     struct node *temp = s->head;
     strcpy(data, temp->data);
     s->head = temp->next;
-    free(temp);
+    dynmic_free(temp);
     s->size--;
     return 0;
 }
@@ -116,17 +117,17 @@ int top(struct stack *s, char *data) {
     return 0;
 }
 int free_stack(struct stack *s) {
-    //free the stack nodes and set the stack to be empty
-    //stack it self is not freed because it can be reused or not on heap
-    //need to free it manually
+    //dynmic_free the stack nodes and set the stack to be empty
+    //stack it self is not dynmic_freed because it can be reused or not on heap
+    //need to dynmic_free it manually
     struct node *temp = s->head;
     while (temp != NULL) {
         struct node *next = temp->next;
-        free(temp->data);
-        free(temp);
+        dynmic_free(temp->data);
+        dynmic_free(temp);
         temp = next;
     }
-    free(s->stack_name);
+    dynmic_free(s->stack_name);
     s->size = 0;
     s->head = NULL;
     return 0;
@@ -151,8 +152,8 @@ int stack_command(struct stack *s, char * data){
     //stack command
     //return -1 if error
     //return 0 if success
-    char *command = (char *)malloc(sizeof(char) * MAX_DATA);
-    char *command_data = (char *)malloc(sizeof(char) * MAX_DATA);
+    char *command = (char *)dynmic_alloc(sizeof(char) * MAX_DATA);
+    char *command_data = (char *)dynmic_alloc(sizeof(char) * MAX_DATA);
     split_command_by_first_space(data, command);
     split_command(data, strlen(command) + 1, command_data);
     //check if command is PUSH
@@ -174,8 +175,8 @@ int stack_command(struct stack *s, char * data){
         strcat(data, command_data);
         return 0;
     }
-    //check if command is FREE
-    else if (strcmp(command, "FREE") == 0) {
+    //check if command is dynmic_free
+    else if (strcmp(command, "dynmic_free") == 0) {
         free_stack(s);
          strcpy(data, command_data);
         return 0;
@@ -190,9 +191,9 @@ int stack_command(struct stack *s, char * data){
 }   
 void* create_stack(char *stack_name){
     //create a stack
-    struct stack *s = (struct stack *)malloc(sizeof(struct stack));
+    struct stack *s = (struct stack *)dynmic_alloc(sizeof(struct stack));
     s->size = 0;
-    s->stack_name = (char *)malloc(sizeof(char) * strlen(stack_name));
+    s->stack_name = (char *)dynmic_alloc(sizeof(char) * strlen(stack_name));
     strcpy(s->stack_name, stack_name);
     s->head = NULL;
     return s;
@@ -202,9 +203,9 @@ void* create_stack(char *stack_name){
 |======= notes interface  =======    |
 |------------------------------------|
 
-1. change all arrays to dynamic array ( malloc for strat ) - string in nodes mostly  - done
+1. change all arrays to dynamic array ( dynmic_alloc for strat ) - string in nodes mostly  - done
 2. try to look for a way to use brk and sbrk to allocate memory 
-3. write a function to do malloc calloc and free
+3. write a function to do dynmic_alloc calloc and dynmic_free
 
 how to create a cpp exe
 g++ -Wall -o stack stack.cpp
